@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <dos.h>
 #include <windows.h>
+#include "cxxopts.hpp"
 //#include <iostream.h>
 
 
@@ -1516,6 +1517,13 @@ void OnCancel()
 }
 
 
+void ShowArgError(const cxxopts::Options& options, const std::string& message)
+{
+	std::cout << message << std::endl;
+	std::cout << options.help() << std::endl;
+	exit(1);
+}
+
 
 /*******************************************************************************************/
 /* Function    : main																       */
@@ -1524,8 +1532,53 @@ void OnCancel()
 /* Description : Main console command line demo                                            */
 /*******************************************************************************************/
 
-int main(int argc, char* argv[])
+int main(int argc, const char* argv[])
 {
+	cxxopts::Options options("DfuSeCommand", "DfuSe programmer for QMK");
+	options.add_options()
+		("h,help", "Print this help message")
+		("u,upload", "Read firmware from device into <file>", cxxopts::value<std::string>(), "<file>")
+		("d,download", "Write firmware from <file> into device", cxxopts::value<std::string>(), "<file>")
+		("r,restart", "Restart the device");
+	try
+	{
+		auto result = options.parse(argc, argv);
+		if (result.count("help"))
+		{
+			std::cout << options.help() << std::endl;
+			return 0;
+		}
+		if (result.count("upload"))
+		{
+			if (result.count("download"))
+			{
+				ShowArgError(options, "You can't specify both upload and download at the same time");
+			}
+			else
+			{
+			}
+		}
+		else if (result.count("download"))
+		{
+		}
+		else if (result.count("restart"))
+		{
+		}
+
+		if (Refresh() == 1)
+		{
+			return 1;
+		}
+
+
+	}
+	catch (const cxxopts::OptionException& e)
+	{
+		std::string err = "Invalid arguments: ";
+		err += e.what();
+		ShowArgError(options, err);
+	}
+#if 0
 	
 	if (argc == 1)  // wrong parameters
 
@@ -1796,6 +1849,6 @@ int main(int argc, char* argv[])
 	}
 		
 			
-	
+#endif	
 	return 0;
 }
