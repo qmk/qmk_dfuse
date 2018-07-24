@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DfuFileMgr", "DfuFileMgr\DfuFileMgr.vcxproj", "{90BBC4A3-DD3D-447F-82AD-5987EFEEB321}"
 EndProject
@@ -14,6 +14,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "STDFUPRT", "STDFUPRT\STDFUPRT.vcxproj", "{787DE762-2CF6-456A-84E3-CE8EBD597391}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "STDFU", "STDFU\STDFU.vcxproj", "{808B30E1-2459-4B4B-AFEB-62B9F159F975}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1976CD02-0152-4CCE-806C-38362E057481} = {1976CD02-0152-4CCE-806C-38362E057481}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "STTubeDevice30", "STTubeDevice\STTubeDevice.vcxproj", "{1976CD02-0152-4CCE-806C-38362E057481}"
 EndProject

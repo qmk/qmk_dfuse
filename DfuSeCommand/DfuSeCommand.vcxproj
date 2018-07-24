@@ -135,7 +135,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Console</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalDependencies>../STDFU/release/STDFU.lib;../STDFUFiles/Release/STDFUFiles.lib;../STDFUprt/release/STDFUprt.lib;setupapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -170,7 +170,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Console</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalDependencies>../STDFU/release/STDFU.lib;../STDFUFiles/Release/STDFUFiles.lib;../STDFUprt/release/STDFUprt.lib;setupapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -209,7 +209,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OutputFile>../Binary/Debug/DfuSeCommand.exe</OutputFile>
-      <AdditionalDependencies>../STDFU/release/STDFU.lib;../STDFUFiles/Release/STDFUFiles.lib;../STDFUprt/release/STDFUprt.lib;setupapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -247,7 +247,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OutputFile>../Binary/Debug/DfuSeCommand.exe</OutputFile>
-      <AdditionalDependencies>../STDFU/release/STDFU.lib;../STDFUFiles/Release/STDFUFiles.lib;../STDFUprt/release/STDFUprt.lib;setupapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>setupapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -268,6 +268,20 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\STDFUFiles\STDFUFiles.vcxproj">
+      <Project>{82e0bebd-7939-4195-80a3-39ac5ab6e7a3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\STDFUPRT\STDFUPRT.vcxproj">
+      <Project>{787de762-2cf6-456a-84e3-ce8ebd597391}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\STDFU\STDFU.vcxproj">
+      <Project>{808b30e1-2459-4b4b-afeb-62b9f159f975}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\STTubeDevice\STTubeDevice.vcxproj">
+      <Project>{1976cd02-0152-4cce-806c-38362e057481}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

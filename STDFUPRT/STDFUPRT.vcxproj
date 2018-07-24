@@ -148,7 +148,7 @@
       <OutputFile>../Binary/Debug/STDFUPRT.dll</OutputFile>
       <ImportLibrary>.\Debug\STDFUPRT.lib</ImportLibrary>
       <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>../STDFU/debug/STDFU.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>.\STDFUPRT.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -194,7 +194,7 @@
       <OutputFile>../Binary/Debug/STDFUPRT.dll</OutputFile>
       <ImportLibrary>.\Debug\STDFUPRT.lib</ImportLibrary>
       <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>../STDFU/debug/STDFU.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>.\STDFUPRT.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -238,7 +238,7 @@
       <OutputFile>../Binary/Release/STDFUPRT.dll</OutputFile>
       <ImportLibrary>.\Release\STDFUPRT.lib</ImportLibrary>
       <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>../STDFU/release/STDFU.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>.\STDFUPRT.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -281,7 +281,7 @@
       <OutputFile>../Binary/Release/STDFUPRT.dll</OutputFile>
       <ImportLibrary>.\Release\STDFUPRT.lib</ImportLibrary>
       <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>../STDFU/release/STDFU.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>.\STDFUPRT.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -323,6 +323,11 @@
     <ClInclude Include="STDFUPRTINC.h" />
     <ClInclude Include="stthread.h" />
     <ClInclude Include="uploadthread.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\STDFU\STDFU.vcxproj">
+      <Project>{808b30e1-2459-4b4b-afeb-62b9f159f975}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
