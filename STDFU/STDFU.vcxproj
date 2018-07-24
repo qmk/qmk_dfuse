@@ -122,7 +122,6 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;setupapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>../Binary/Debug/STDFU.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>.\STDFU.def</ModuleDefinitionFile>

@@ -87,7 +87,6 @@
       <LinkDLL>true</LinkDLL>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <OutputFile>../Binary/Debug/STTubeDevice30.dll</OutputFile>
       <ImportLibrary>.\Debug\STTubeDevice30.lib</ImportLibrary>
       <ModuleDefinitionFile>.\STTubeDevice.def</ModuleDefinitionFile>
     </Link>

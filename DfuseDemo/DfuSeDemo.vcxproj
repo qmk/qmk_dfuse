@@ -97,7 +97,6 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <OutputFile>../Binary/Debug/DfuSeDemo.exe</OutputFile>
       <AdditionalLibraryDirectories>../lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>setupapi.lib;lib/hid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
