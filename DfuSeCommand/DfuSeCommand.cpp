@@ -33,6 +33,7 @@
 
 
 static GUID	GUID_DFU = { 0x3fe809ab, 0xfb91, 0x4cb5, { 0xa6, 0x43, 0x69, 0x67, 0x0d, 0x52,0x36,0x6e } };
+static GUID GUID_APP = { 0xcb979912, 0x5029, 0x420a, { 0xae, 0xb1, 0x34, 0xfc, 0x0a, 0x7d,0x57,0x26 } };
 
 CTime startTime ;
 CTime endTime ;
@@ -115,11 +116,11 @@ void man()
 	printf("STMicroelectronics DfuSe command line v1.4.0 \n\n");
 	printf(" Usage : \n\n");
 	printf(" DfuSeCommand.exe [options] [Agrument][[options] [Agrument]...] \n\n");
-    
+	
 	printf("  -?                   (Show this help) \n");
 
 	printf("  -c                   (Connect to a DFU device )\n");
-    printf("     --de  device      : Number of the device target, by default 0 \n");
+	printf("     --de  device      : Number of the device target, by default 0 \n");
 	printf("     --al  target      : Number of the alternate target, by default 0 \n");
 
 	printf("  -u                   (Upload flash contents to a .dfu file )\n");
@@ -129,6 +130,8 @@ void man()
 	printf("     --v               : verify after download \n");
 	printf("     --o               : optimize; removes FFs data \n");
 	printf("     --fn  file_name   : full path name (.dfu file) \n");
+
+	printf("  -r                   (Reboot after completion) ");
 	fflush(NULL);
 
 
@@ -149,7 +152,8 @@ bool Is_Option(char* option)
 	else if (strcmp(option,"-c")==0) return true;
 	else if (strcmp(option,"-u")==0) return true;
 	else if (strcmp(option,"-d")==0) return true;
-    else return false;
+	else if (strcmp(option,"-r") == 0) return true;
+	else return false;
 }
 
 /*******************************************************************************************/
@@ -161,8 +165,8 @@ bool Is_Option(char* option)
 bool Is_SubOption(char* suboption)
 {
 	if (strcmp(suboption,"--fn")==0) return true;
-    else if (strcmp(suboption,"--de")==0) return true;
-    else if (strcmp(suboption,"--al")==0) return true;
+	else if (strcmp(suboption,"--de")==0) return true;
+	else if (strcmp(suboption,"--al")==0) return true;
 	else if (strcmp(suboption,"--v")==0) return true;
 	else if (strcmp(suboption,"--o")==0) return true;
 
@@ -420,7 +424,7 @@ void HandleError(PDFUThreadContext pContext)
 	  }
 
 	//AfxMessageBox(CurrentTarget+ErrorCode+Alternate+Operation+TransferSize+LastDFUStatus+CurrentStateMachineTransition+CurrentRequest+StartAddress+EndAddress+CurrentNBlock+CurrentLength+Percent);
-    printf(CurrentTarget+ErrorCode+Alternate+Operation+TransferSize+LastDFUStatus+CurrentStateMachineTransition+CurrentRequest+StartAddress+EndAddress+CurrentNBlock+CurrentLength+Percent);
+	printf(CurrentTarget+ErrorCode+Alternate+Operation+TransferSize+LastDFUStatus+CurrentStateMachineTransition+CurrentRequest+StartAddress+EndAddress+CurrentNBlock+CurrentLength+Percent);
 	fflush(NULL);
 
 
@@ -467,7 +471,7 @@ void HandleTxtSuccess(LPCSTR szTxt)
 	else
 		printf(szTxt);
 		
-    fflush(NULL);
+	fflush(NULL);
 }
 
 
@@ -540,7 +544,7 @@ int LaunchUpgrade(void)
 	DWORD dwRet;
 	int i, TargetSel=m_CurrentTarget;
 	HANDLE hImage;
-    
+	
 
 	// Get the image of the selected target
 	dwRet=STDFUFILES_OpenExistingDFUFile((LPSTR)(LPCSTR)m_DownFileName, &hFile, NULL, NULL, NULL, &NbTargets);
@@ -697,6 +701,36 @@ int LaunchVerify(void)
 	}
 }
 
+void LaunchReboot()
+{
+	DFUThreadContext Context;
+	CString Tempo;
+	DWORD dwRet;
+	HANDLE hImage;
+
+	CString Name;
+
+	// Prepare the asynchronous operation
+	lstrcpy(Context.szDevLink, TmpDev[m_CurrentDevice]);
+
+	Context.DfuGUID=GUID_DFU;
+	Context.AppGUID=GUID_APP;
+	Context.Operation=OPERATION_RETURN;
+	Name = m_pMapping[TargetSel].Name;
+	STDFUFILES_CreateImageFromMapping(&hImage, m_pMapping+TargetSel);
+	STDFUFILES_SetImageName(hImage, (LPSTR)(LPCSTR)Name);
+	STDFUFILES_FilterImageForOperation(hImage, m_pMapping+TargetSel, OPERATION_RETURN, FALSE);
+	Context.hImage=hImage;
+
+	startTime = CTime::GetCurrentTime();
+
+	dwRet=STDFUPRT_LaunchOperation(&Context, &m_OperationCode);
+	if (dwRet!=STDFUPRT_NOERROR)
+	{
+		Context.ErrorCode=dwRet;
+		HandleError(&Context);
+	}
+}
 
 
 
@@ -744,7 +778,7 @@ int Refresh(void)
 	}*/  // Commented in Version V3.0.3 and Keep it for customer usage if wanted.
 
 
-    // Continue with DFU devices. DFU devices will be listed after HID ones
+	// Continue with DFU devices. DFU devices will be listed after HID ones
 
 		GUID Guid=GUID_DFU;
 		devIndex=0;
@@ -785,7 +819,7 @@ int Refresh(void)
 				if (SetupDiGetDeviceRegistryProperty(info, &did, SPDRP_DEVICEDESC, NULL, (PBYTE)Product, 253, NULL))
 				{ 
 					Prod= Product;
-                    
+					
 				}
 				else
 					Prod="(Unnamed DFU device)";
@@ -803,7 +837,7 @@ int Refresh(void)
 		m_NbAlternates=0;
 
 
-        if ( devIndex > 0 )
+		if ( devIndex > 0 )
 
 		{
 
@@ -837,7 +871,7 @@ int Refresh(void)
 								if (STDFUPRT_CreateMappingFromDevice((LPSTR)(LPCSTR)TmpDev[m_CurrentDevice], &m_pMapping, &m_NbAlternates)==STDFUPRT_NOERROR)
 								{
 								
-								    bSuccess=TRUE;								
+									bSuccess=TRUE;								
 								}
 								else
 								printf("Unable to find or decode device mapping... Bad Firmware");
@@ -854,7 +888,7 @@ int Refresh(void)
 					fflush(NULL);}
 
 
-		    /* Device ID and Unique ID may be added by  user */
+			/* Device ID and Unique ID may be added by  user */
 			
 			/*
 			
@@ -945,7 +979,7 @@ int Refresh(void)
 
 			*/
 
-            STDFU_Close(&hDle);
+			STDFU_Close(&hDle);
 
 
 		printf("%d Device(s) found : \n",devIndex );
@@ -998,8 +1032,8 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 	{
 
 		endTime = CTime::GetCurrentTime();
-        elapsedTime = endTime - startTime;
-    
+		elapsedTime = endTime - startTime;
+	
 		printf( " Duration: %.2i:%.2i:%.2i", elapsedTime.GetHours(),elapsedTime.GetMinutes(),elapsedTime.GetSeconds());
 		fflush(NULL);
 
@@ -1072,7 +1106,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 	
 
 
-		         // m_DataSize.Format("%i KB(%i Bytes) of %i KB(%i Bytes)", ((STDFUFILES_GetImageSize(Context.hImage)/1024)*Context.Percent)/100,  (STDFUFILES_GetImageSize(Context.hImage)*Context.Percent)/100, STDFUFILES_GetImageSize(Context.hImage)/1024,  STDFUFILES_GetImageSize(Context.hImage));
+				 // m_DataSize.Format("%i KB(%i Bytes) of %i KB(%i Bytes)", ((STDFUFILES_GetImageSize(Context.hImage)/1024)*Context.Percent)/100,  (STDFUFILES_GetImageSize(Context.hImage)*Context.Percent)/100, STDFUFILES_GetImageSize(Context.hImage)/1024,  STDFUFILES_GetImageSize(Context.hImage));
 	
 
 				  break;
@@ -1083,9 +1117,9 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 				  printf(Tmp);
 				  fflush(NULL);
 
-	              //printf("%i KB(%i Bytes) of %i KB(%i Bytes) \n", ((STDFUFILES_GetImageSize(Context.hImage)/1024)*Context.Percent)/100,  (STDFUFILES_GetImageSize(Context.hImage)*Context.Percent)/100, STDFUFILES_GetImageSize(Context.hImage)/1024,  STDFUFILES_GetImageSize(Context.hImage));
+				  //printf("%i KB(%i Bytes) of %i KB(%i Bytes) \n", ((STDFUFILES_GetImageSize(Context.hImage)/1024)*Context.Percent)/100,  (STDFUFILES_GetImageSize(Context.hImage)*Context.Percent)/100, STDFUFILES_GetImageSize(Context.hImage)/1024,  STDFUFILES_GetImageSize(Context.hImage));
 	
-		          //m_DataSize.Format("%i KB(%i Bytes) of %i KB(%i Bytes)", ((STDFUFILES_GetImageSize(Context.hImage)/1024)*Context.Percent)/100,  (STDFUFILES_GetImageSize(Context.hImage)*Context.Percent)/100, STDFUFILES_GetImageSize(Context.hImage)/1024,  STDFUFILES_GetImageSize(Context.hImage));
+				  //m_DataSize.Format("%i KB(%i Bytes) of %i KB(%i Bytes)", ((STDFUFILES_GetImageSize(Context.hImage)/1024)*Context.Percent)/100,  (STDFUFILES_GetImageSize(Context.hImage)*Context.Percent)/100, STDFUFILES_GetImageSize(Context.hImage)/1024,  STDFUFILES_GetImageSize(Context.hImage));
 	
 
 				  break;
@@ -1377,7 +1411,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 							else
 							{ 
 							
-							  	KillTimer(hWnd, nIDEvent);
+								KillTimer(hWnd, nIDEvent);
 									PostQuitMessage (0) ;
 							}
 
@@ -1417,8 +1451,8 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 
 						if ( (Context.Operation==OPERATION_DETACH) || (Context.Operation==OPERATION_RETURN) )
 						{
-					
-							/*Refresh();*/
+							KillTimer(hWnd, nIDEvent);
+							PostQuitMessage (0) ;
 						}
 						else
 						{
@@ -1504,6 +1538,7 @@ int main(int argc, char* argv[])
 	else
 	{
 		int arg_index = 1;
+		bool reboot = false;
 
 		while(arg_index < argc)
 		{
@@ -1529,9 +1564,9 @@ int main(int argc, char* argv[])
 			{
 			   while(arg_index < argc)
 			   {
-			     if (arg_index< argc-1) 
+				 if (arg_index< argc-1) 
 					 arg_index++;
-			     else 
+				 else 
 					 break;
 				 if(Is_Option(argv[arg_index])) // Set default connection settings and continue with the next option
 					 break;	
@@ -1540,7 +1575,7 @@ int main(int argc, char* argv[])
 				 {
 					 if (arg_index< argc-1) 
 						 arg_index++;
-			         else 
+					 else 
 						 break; 			 
 					 if (strcmp(argv[arg_index-1],"--de")==0) 
 					 {
@@ -1563,12 +1598,12 @@ int main(int argc, char* argv[])
 					 /* TO DO:  Free device and buffers*/
 					 printf("\n Press any key to continue ..."); 
 					 fflush(NULL);
-				     getchar(); 
-				     return 1;
+					 getchar(); 
+					 return 1;
 				 }
 			   }
-			    // Enumerate the DFU device and Set Buffers
-			   	Refresh();
+				// Enumerate the DFU device and Set Buffers
+				Refresh();
 			}
 			//============================ UPLOAD ===============================================
 			else if (strcmp(argv[arg_index],"-u")==0)
@@ -1613,9 +1648,9 @@ int main(int argc, char* argv[])
 
 			   if(!FileExist((LPCTSTR)m_UpFileName))
 			   {
-                      if ( m_UpFileName != "")
+					  if ( m_UpFileName != "")
 					  {
-				          printf( "file %s does not exist .. Creating file\n", m_UpFileName);
+						  printf( "file %s does not exist .. Creating file\n", m_UpFileName);
 						  fflush(NULL);
 						  FILE* fp = fopen((LPCTSTR)m_UpFileName, "a+");
 						  fclose(fp);
@@ -1624,9 +1659,9 @@ int main(int argc, char* argv[])
 						  
 					  {
 					  
-					    printf( "file %s does not exist .. \n", m_UpFileName);
+						printf( "file %s does not exist .. \n", m_UpFileName);
 						fflush(NULL);
-					    return 1;
+						return 1;
 					  }
 					
 			   }
@@ -1654,9 +1689,9 @@ int main(int argc, char* argv[])
 			{
 				while(arg_index < argc)
 				{
-			     if (arg_index< argc-1) 
+				 if (arg_index< argc-1) 
 					 arg_index++;
-			     else 
+				 else 
 					 break;
 
 				 if(Is_Option(argv[arg_index])) 
@@ -1666,7 +1701,7 @@ int main(int argc, char* argv[])
 				 {
 					 if (arg_index< argc) 
 						 arg_index++;
-			         else 
+					 else 
 						 break;
 
 					 if (strcmp(argv[arg_index-1],"--v")==0) 
@@ -1683,14 +1718,14 @@ int main(int argc, char* argv[])
 					 {
 						 m_DownFileName = argv[arg_index];
 						 _splitpath(m_DownFileName,Drive,Dir,Fname,Ext);
-	                     ptr=strupr(Ext);
-	                     strcpy(Ext, ptr);
+						 ptr=strupr(Ext);
+						 strcpy(Ext, ptr);
 						 arg_index++;
 					 }
 				 }
 				 else 
 				 {
-                     if (arg_index <= (argc - 1)) 
+					 if (arg_index <= (argc - 1)) 
 						{ printf("bad parameter [%s] \n", argv[arg_index]);
 						fflush(NULL);
 						}
@@ -1699,8 +1734,8 @@ int main(int argc, char* argv[])
 
 					 printf("\n Press any key to continue ..."); 
 					 fflush(NULL);
-				     getchar(); 
-				     return 1;
+					 getchar(); 
+					 return 1;
 				 }
 			   }
 
@@ -1708,15 +1743,15 @@ int main(int argc, char* argv[])
 
 			  if(!FileExist((LPCTSTR)m_DownFileName))
 			   {
-                    printf( "file does not exist %s \n", m_DownFileName);
+					printf( "file does not exist %s \n", m_DownFileName);
 					fflush(NULL);
 
 					// TO DO:  Free device and buffers
 
 					 printf("\n Press any key to continue ..."); 
 					 fflush(NULL);
-				     getchar(); 
-				     return 1;
+					 getchar(); 
+					 return 1;
 			   }
 
 
@@ -1737,8 +1772,25 @@ int main(int argc, char* argv[])
    
 
 			}
+			else if (strcmp(argv[arg_index], "-r") == 0)
+			{
+				reboot = true;
+				arg_index++;
+			}
 			
 		} // While
+
+		if (reboot)
+		{
+		   MSG Msg;
+		   UINT TimerId = SetTimer(NULL, 0, 500, (TIMERPROC) &TimerProc);
+		   LaunchReboot();
+		   while (GetMessage(&Msg, NULL, 0, 0)) 
+		   {
+				DispatchMessage(&Msg);
+		   }
+		   OnCancel();
+		}
 
 		return 0;
 	}
