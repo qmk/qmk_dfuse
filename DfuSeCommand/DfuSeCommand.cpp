@@ -75,8 +75,9 @@ int TargetSel=m_CurrentTarget;
 HANDLE hImage;
 
 
-bool  Verify = false;
-bool  Optimize = false;
+bool Verify = false;
+bool Optimize = false;
+bool Restart = false;
 char *ptr = NULL;
 char Drive[3], Dir[256], Fname[256], Ext[256];
 
@@ -1503,6 +1504,7 @@ void OnCancel()
 void ShowArgError(const cxxopts::Options& options, const std::string& message)
 {
 	std::cout << message << std::endl;
+	std::cout << std::endl << std::endl;
 	std::cout << options.help() << std::endl;
 	exit(1);
 }
@@ -1547,6 +1549,11 @@ int main(int argc, const char* argv[])
 		}
 		else if (result.count("restart"))
 		{
+			Restart = true;
+		}
+		else
+		{
+			ShowArgError(options, "Please specify either upload, download and/or restart");
 		}
 
 		Refresh();
@@ -1581,6 +1588,21 @@ int main(int argc, const char* argv[])
 			std::cout << "       or specify the device path!" << std::endl;
 			return 1;
 		}
+
+	   MSG Msg;
+	   UINT TimerId = SetTimer(NULL, 0, 500, (TIMERPROC) &TimerProc);
+
+		if (Restart)
+		{
+			LaunchReboot();
+		}
+
+		while (GetMessage(&Msg, NULL, 0, 0)) 
+		{
+			DispatchMessage(&Msg);
+		}
+
+		OnCancel();
 	}
 	catch (const cxxopts::OptionException& e)
 	{
