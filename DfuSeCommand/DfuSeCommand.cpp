@@ -753,7 +753,7 @@ void LaunchReboot()
 /*******************************************************************************************/
 
 
-int Refresh(void)
+void Refresh()
 {
  
 	int i;
@@ -836,6 +836,7 @@ int Refresh(void)
 
 			DeviceInfo& devInfo = m_DeviceInfos[devIndex];
 
+
 			if (STDFU_Open((LPSTR)(LPCSTR)devInfo.m_DevPath, &hDle) == STDFU_NOERROR)   //  !!!! To be changed
 			{
 				if (STDFU_GetDeviceDescriptor(&hDle, &devInfo.m_DeviceDesc) == STDFU_NOERROR)
@@ -896,16 +897,11 @@ int Refresh(void)
 			{
 				printf("Device [%d]: %s\n", i, (LPCSTR)m_DeviceInfos[i].m_Error);
 			}
+			printf(" Device Path:\n");
+			printf(" %s\n", (LPCSTR)m_DeviceInfos[i].m_DevPath);
 		}
+		printf("\n\n");
 		fflush(NULL);
-		return 0;
-	}
-	else 
-	{
-
-		printf("No devices found. Plug your DFU Device ! \n");
-		fflush(NULL);
-		return 1 ;  /* No devices */
 	}
 	
 	/* Device ID and Unique ID may be added by  user */
@@ -1526,7 +1522,8 @@ int main(int argc, const char* argv[])
 		("h,help", "Print this help message")
 		("u,upload", "Read firmware from device into <file>", cxxopts::value<std::string>(), "<file>")
 		("d,download", "Write firmware from <file> into device", cxxopts::value<std::string>(), "<file>")
-		("r,restart", "Restart the device");
+		("r,restart", "Restart the device")
+		("D,device", "Device path", cxxopts::value<std::string>(), "<devpath>");
 	try
 	{
 		auto result = options.parse(argc, argv);
@@ -1552,12 +1549,38 @@ int main(int argc, const char* argv[])
 		{
 		}
 
-		if (Refresh() == 1)
+		Refresh();
+
+		if (devIndex == 0)
 		{
+			std::cout << "Error: No devices found. Please, plug your DFU Device!" << std::endl;
+		}
+		else if (result.count("device"))
+		{
+			auto path = result["device"];
+			bool found = false;
+			for (int i = 0; i < devIndex; i++)
+			{
+				if (m_DeviceInfos[i].m_DevPath == path.as<std::string>().c_str())
+				{
+					found = true;
+					m_CurrentDevice = i;
+					break;
+				}
+			}
+			if (!found)
+			{
+				std::cout << "Error: Device" << std::endl << " " << path.as<std::string>() << std::endl;
+				std::cout << " is not connected" << std::endl;
+				return 1;
+			}
+		}
+		else if (devIndex > 1)
+		{
+			std::cout << "Error: More than one device found. Please, disconnect the rest" << std::endl;
+			std::cout << "       or specify the device path!" << std::endl;
 			return 1;
 		}
-
-
 	}
 	catch (const cxxopts::OptionException& e)
 	{
