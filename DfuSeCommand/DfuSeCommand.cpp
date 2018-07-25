@@ -1542,6 +1542,19 @@ int main(int argc, const char* argv[])
 			}
 			else
 			{
+				m_UpFileName = result["upload"].as<std::string>().c_str();
+				if(!FileExist((LPCTSTR)m_UpFileName))
+				{
+					printf( "file %s does not exist .. Creating file\n", m_UpFileName);
+					fflush(NULL);
+					FILE* fp = fopen((LPCTSTR)m_UpFileName, "a+");
+					fclose(fp);
+				}
+				else
+				{
+					printf( "file %s exists .. Overwriting\n", m_UpFileName);
+					fflush(NULL);
+				}
 			}
 		}
 		else if (result.count("download"))
@@ -1561,6 +1574,7 @@ int main(int argc, const char* argv[])
 		if (devIndex == 0)
 		{
 			std::cout << "Error: No devices found. Please, plug your DFU Device!" << std::endl;
+			return 1;
 		}
 		else if (result.count("device"))
 		{
@@ -1589,10 +1603,14 @@ int main(int argc, const char* argv[])
 			return 1;
 		}
 
-	   MSG Msg;
-	   UINT TimerId = SetTimer(NULL, 0, 500, (TIMERPROC) &TimerProc);
-
-		if (Restart)
+		MSG Msg;
+		UINT TimerId = SetTimer(NULL, 0, 500, (TIMERPROC) &TimerProc);
+		
+		if (m_UpFileName != "")
+		{
+			LaunchUpload();
+		}
+		else if (Restart)
 		{
 			LaunchReboot();
 		}
