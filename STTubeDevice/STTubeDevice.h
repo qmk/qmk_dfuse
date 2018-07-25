@@ -20,6 +20,7 @@
 //
 class CSTDevicesManager;
 
+#if 0
 class CSTTubeDeviceApp : public CWinApp
 {
 private:
@@ -42,6 +43,7 @@ public:
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
+#endif
 
 
 /////////////////////////////////////////////////////////////////////////////

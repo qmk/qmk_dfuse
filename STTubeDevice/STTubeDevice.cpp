@@ -41,6 +41,7 @@ static char THIS_FILE[] = __FILE__;
 //		details.
 //
 
+#if 0
 /////////////////////////////////////////////////////////////////////////////
 // CSTTubeDeviceApp
 
@@ -78,6 +79,9 @@ int CSTTubeDeviceApp::ExitInstance()
 
 	return CWinApp::ExitInstance();
 }
+#endif
+
+CSTDevicesManager manager;
 
 /////////////////////////////////////////////////////////////////////////////
 // Exported functions bodies
@@ -97,34 +101,24 @@ DWORD WINAPI STDevice_Open(LPSTR szDevicePath,
 	if (sSymbName.IsEmpty())
 		return STDEVICE_BADPARAMETER;
 
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->Open(sSymbName, phDevice, phUnPlugEvent);
+	return manager.Open(sSymbName, phDevice, phUnPlugEvent);
 
 	return STDEVICE_MEMORY;
 }
 
 DWORD WINAPI STDevice_Close(HANDLE hDevice)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->Close(hDevice);
-
-	return STDEVICE_MEMORY;
+	return manager.Close(hDevice);
 }
 
 DWORD WINAPI STDevice_OpenPipes(HANDLE hDevice)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->OpenPipes(hDevice);
-
-	return STDEVICE_MEMORY;
+	return manager.OpenPipes(hDevice);
 }
 
 DWORD WINAPI STDevice_ClosePipes(HANDLE hDevice)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->ClosePipes(hDevice);
-
-	return STDEVICE_MEMORY;
+	return manager.ClosePipes(hDevice);
 }
 
 DWORD WINAPI STDevice_GetStringDescriptor(HANDLE hDevice, 
@@ -135,55 +129,40 @@ DWORD WINAPI STDevice_GetStringDescriptor(HANDLE hDevice,
 	CString sString;
 	DWORD nRet=STDEVICE_MEMORY;
 
-	if (theApp.GetMgr())
-	{
-		// Check parameters we use here. Others are checked in the manager class
-		if (!szString)
-			return STDEVICE_BADPARAMETER;
+	// Check parameters we use here. Others are checked in the manager class
+	if (!szString)
+		return STDEVICE_BADPARAMETER;
 
-		nRet=theApp.GetMgr()->GetStringDescriptor(hDevice, nIndex, sString);
+	nRet=manager.GetStringDescriptor(hDevice, nIndex, sString);
 
-		if (nRet==STDEVICE_NOERROR)
-			strncpy(szString, (LPCSTR)sString, nStringLength);
-	}
+	if (nRet==STDEVICE_NOERROR)
+		strncpy(szString, (LPCSTR)sString, nStringLength);
 	return nRet;
 }
 
 DWORD WINAPI STDevice_GetDeviceDescriptor(HANDLE hDevice, 
 								   PUSB_DEVICE_DESCRIPTOR pDesc)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->GetDeviceDescriptor(hDevice, pDesc);
-
-	return STDEVICE_MEMORY;
+	return manager.GetDeviceDescriptor(hDevice, pDesc);
 }
 
 DWORD WINAPI STDevice_GetNbOfConfigurations(HANDLE hDevice, PUINT pNbOfConfigs)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->GetNbOfConfigurations(hDevice, pNbOfConfigs);
-
-	return STDEVICE_MEMORY;
+	return manager.GetNbOfConfigurations(hDevice, pNbOfConfigs);
 }
 
 DWORD WINAPI STDevice_GetConfigurationDescriptor(HANDLE hDevice, 
 										  UINT nConfigIdx, 
 										  PUSB_CONFIGURATION_DESCRIPTOR pDesc)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->GetConfigurationDescriptor(hDevice, nConfigIdx, pDesc);
-
-	return STDEVICE_MEMORY;
+	return manager.GetConfigurationDescriptor(hDevice, nConfigIdx, pDesc);
 }
 
 DWORD WINAPI STDevice_GetNbOfInterfaces(HANDLE hDevice, 
 								 UINT nConfigIdx, 
 								 PUINT pNbOfInterfaces)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->GetNbOfInterfaces(hDevice, nConfigIdx, pNbOfInterfaces);
-
-	return STDEVICE_MEMORY;
+	return manager.GetNbOfInterfaces(hDevice, nConfigIdx, pNbOfInterfaces);
 }
 
 DWORD WINAPI STDevice_GetNbOfAlternates(HANDLE hDevice, 
@@ -191,10 +170,7 @@ DWORD WINAPI STDevice_GetNbOfAlternates(HANDLE hDevice,
 								 UINT nInterfaceIdx, 
 								 PUINT pNbOfAltSets)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->GetNbOfAlternates(hDevice, nConfigIdx, nInterfaceIdx, pNbOfAltSets);
-
-	return STDEVICE_MEMORY;
+	return manager.GetNbOfAlternates(hDevice, nConfigIdx, nInterfaceIdx, pNbOfAltSets);
 }
 
 DWORD WINAPI STDevice_GetInterfaceDescriptor(HANDLE hDevice, 
@@ -203,10 +179,7 @@ DWORD WINAPI STDevice_GetInterfaceDescriptor(HANDLE hDevice,
 									  UINT nAltSetIdx, 
 									  PUSB_INTERFACE_DESCRIPTOR pDesc)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->GetInterfaceDescriptor(hDevice, nConfigIdx, nInterfaceIdx, nAltSetIdx, pDesc);
-
-	return STDEVICE_MEMORY;
+	return manager.GetInterfaceDescriptor(hDevice, nConfigIdx, nInterfaceIdx, nAltSetIdx, pDesc);
 }
 
 DWORD WINAPI STDevice_GetNbOfEndPoints(HANDLE hDevice, 
@@ -215,10 +188,7 @@ DWORD WINAPI STDevice_GetNbOfEndPoints(HANDLE hDevice,
 								UINT nAltSetIdx, 
 								PUINT pNbOfEndPoints)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->GetNbOfEndPoints(hDevice, nConfigIdx, nInterfaceIdx, nAltSetIdx, pNbOfEndPoints);
-
-	return STDEVICE_MEMORY;
+	return manager.GetNbOfEndPoints(hDevice, nConfigIdx, nInterfaceIdx, nAltSetIdx, pNbOfEndPoints);
 }
 
 DWORD WINAPI STDevice_GetEndPointDescriptor(HANDLE hDevice, 
@@ -228,10 +198,7 @@ DWORD WINAPI STDevice_GetEndPointDescriptor(HANDLE hDevice,
 									 UINT nEndPointIdx, 
 									 PUSB_ENDPOINT_DESCRIPTOR pDesc)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->GetEndPointDescriptor(hDevice, nConfigIdx, nInterfaceIdx, nAltSetIdx, nEndPointIdx, pDesc);
-
-	return STDEVICE_MEMORY;
+	return manager.GetEndPointDescriptor(hDevice, nConfigIdx, nInterfaceIdx, nAltSetIdx, nEndPointIdx, pDesc);
 }
 
 DWORD WINAPI STDevice_GetNbOfDescriptors(HANDLE hDevice, 
@@ -243,11 +210,10 @@ DWORD WINAPI STDevice_GetNbOfDescriptors(HANDLE hDevice,
 										UINT nEndPointIdx, 
 										PUINT pNbOfDescriptors)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->GetNbOfDescriptors(hDevice, nLevel,
-												   nType,
-												   nConfigIdx, nInterfaceIdx, nAltSetIdx, nEndPointIdx, 
-												   pNbOfDescriptors);
+	return manager.GetNbOfDescriptors(hDevice, nLevel,
+									  nType,
+									  nConfigIdx, nInterfaceIdx, nAltSetIdx, nEndPointIdx, 
+									  pNbOfDescriptors);
 
 	return STDEVICE_MEMORY;
 }
@@ -263,13 +229,10 @@ DWORD WINAPI STDevice_GetDescriptor(HANDLE hDevice,
 									PBYTE pDesc,
 									UINT nDescSize)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->GetDescriptor(hDevice, nLevel,
-											  nType, 
-											  nConfigIdx, nInterfaceIdx, nAltSetIdx, nEndPointIdx, nIdx,
-											  pDesc, nDescSize);
-
-	return STDEVICE_MEMORY;
+	return manager.GetDescriptor(hDevice, nLevel,
+								 nType, 
+								 nConfigIdx, nInterfaceIdx, nAltSetIdx, nEndPointIdx, nIdx,
+								 pDesc, nDescSize);
 }
 
 DWORD WINAPI STDevice_SelectCurrentConfiguration(HANDLE hDevice, 
@@ -277,71 +240,47 @@ DWORD WINAPI STDevice_SelectCurrentConfiguration(HANDLE hDevice,
 										  UINT nInterfaceIdx, 
 										  UINT nAltSetIdx)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->SelectCurrentConfiguration(hDevice, nConfigIdx, nInterfaceIdx, nAltSetIdx);
-
-	return STDEVICE_MEMORY;
+	return manager.SelectCurrentConfiguration(hDevice, nConfigIdx, nInterfaceIdx, nAltSetIdx);
 }
 
 DWORD WINAPI STDevice_SetDefaultTimeOut(HANDLE hDevice, DWORD nTimeOut)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->SetDefaultTimeOut(hDevice, nTimeOut);
-
-	return STDEVICE_MEMORY;
+	return manager.SetDefaultTimeOut(hDevice, nTimeOut);
 }
 
 DWORD WINAPI STDevice_SetMaxNumInterruptInputBuffer(HANDLE hDevice,
 													WORD nMaxNumInputBuffer)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->SetMaxNumInterruptInputBuffer(hDevice, nMaxNumInputBuffer);
-
-	return STDEVICE_MEMORY;
+	return manager.SetMaxNumInterruptInputBuffer(hDevice, nMaxNumInputBuffer);
 }
 
 DWORD WINAPI STDevice_GetMaxNumInterruptInputBuffer(HANDLE hDevice,
 													PWORD pMaxNumInputBuffer)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->GetMaxNumInterruptInputBuffer(hDevice, pMaxNumInputBuffer);
-
-	return STDEVICE_MEMORY;
+	return manager.GetMaxNumInterruptInputBuffer(hDevice, pMaxNumInputBuffer);
 }
 
 DWORD WINAPI STDevice_SetSuspendModeBehaviour(HANDLE hDevice, BOOL Allow)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->SetSuspendModeBehaviour(hDevice, Allow);
-
-	return STDEVICE_MEMORY;
+	return manager.SetSuspendModeBehaviour(hDevice, Allow);
 }
 
 DWORD WINAPI STDevice_EndPointControl(HANDLE hDevice, 
 							   UINT nEndPointIdx, 
 							   UINT nOperation)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->EndPointControl(hDevice, nEndPointIdx, nOperation);
-
-	return STDEVICE_MEMORY;
+	return manager.EndPointControl(hDevice, nEndPointIdx, nOperation);
 }
 
 DWORD WINAPI STDevice_Reset(HANDLE hDevice)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->Reset(hDevice);
-
-	return STDEVICE_MEMORY;
+	return manager.Reset(hDevice);
 }
 
 DWORD WINAPI STDevice_ControlPipeRequest(HANDLE hDevice, PCNTRPIPE_RQ pRequest,
 										 PBYTE pData)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->ControlPipeRequest(hDevice, pRequest, pData);
-
-	return STDEVICE_MEMORY;
+	return manager.ControlPipeRequest(hDevice, pRequest, pData);
 }
 
 DWORD WINAPI STDevice_Read(HANDLE hDevice, 
@@ -350,10 +289,7 @@ DWORD WINAPI STDevice_Read(HANDLE hDevice,
 					PUINT pSize, 
 					DWORD nTimeOut)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->Read(hDevice, nEndPointIdx, pBuffer, pSize, nTimeOut);
-
-	return STDEVICE_MEMORY;
+	return manager.Read(hDevice, nEndPointIdx, pBuffer, pSize, nTimeOut);
 }
 
 DWORD WINAPI STDevice_Write(HANDLE hDevice, 
@@ -362,10 +298,7 @@ DWORD WINAPI STDevice_Write(HANDLE hDevice,
 					 PUINT pSize, 
 					 DWORD nTimeOut)
 {
-	if (theApp.GetMgr())
-		return theApp.GetMgr()->Write(hDevice, nEndPointIdx, pBuffer, pSize, nTimeOut);
-
-	return STDEVICE_MEMORY;
+	return manager.Write(hDevice, nEndPointIdx, pBuffer, pSize, nTimeOut);
 }
 
 }

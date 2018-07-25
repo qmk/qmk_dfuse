@@ -68,6 +68,8 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CSTDFUPRTApp
 
+CObArray g_Operations;
+#if 0
 BEGIN_MESSAGE_MAP(CSTDFUPRTApp, CWinApp)
 	//{{AFX_MSG_MAP(CSTDFUPRTApp)
 		// NOTE - the ClassWizard will add and remove mapping macros here.
@@ -75,7 +77,6 @@ BEGIN_MESSAGE_MAP(CSTDFUPRTApp, CWinApp)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
-CObArray g_Operations;
 /////////////////////////////////////////////////////////////////////////////
 // CSTDFUPRTApp construction
 
@@ -102,6 +103,7 @@ int CSTDFUPRTApp::ExitInstance()
 // The one and only CSTDFUPRTApp object
 
 CSTDFUPRTApp theApp;
+#endif
 
 
 extern "C" DWORD PASCAL EXPORT STDFUPRT_LaunchOperation(PDFUThreadContext pContext, PDWORD pOperationCode)
