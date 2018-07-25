@@ -76,7 +76,7 @@ HANDLE hImage;
 
 
 bool Verify = false;
-bool Optimize = false;
+bool Optimize = true;
 bool Restart = false;
 char *ptr = NULL;
 char Drive[3], Dir[256], Fname[256], Ext[256];
@@ -1251,22 +1251,31 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 
 							STDFUFILES_DestroyImage(&m_BufferedImage);
 							m_BufferedImage=0;
-							KillTimer(hWnd, nIDEvent);
 							if (bSuccess)
 							{
 								if (!bDifferent)
 								{
 									printf("\nVerify successful !\n");
-									fflush(NULL);
-									PostQuitMessage (0) ;
+									if (Restart)
+									{
+										LaunchReboot();
+									}
+									else
+									{
+										fflush(NULL);
+										KillTimer(hWnd, nIDEvent);
+										PostQuitMessage(0);
+									}
 								}
 								else
 								{
+									KillTimer(hWnd, nIDEvent);
 									PostQuitMessage(1);
 								}
 							}
 							else
 							{
+								KillTimer(hWnd, nIDEvent);
 								PostQuitMessage(1);
 							}
 						}
@@ -1279,6 +1288,10 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 						if (Verify)
 						{
 							LaunchVerify();
+						}
+						else if (Restart)
+						{
+							LaunchReboot();
 						}
 						else
 						{ 
@@ -1361,7 +1374,8 @@ int main(int argc, const char* argv[])
 		("u,upload", "Read firmware from device into <file>", cxxopts::value<std::string>(), "<file>")
 		("d,download", "Write firmware from <file> into device", cxxopts::value<std::string>(), "<file>")
 		("r,restart", "Restart the device")
-		("D,device", "Device path", cxxopts::value<std::string>(), "<devpath>");
+		("D,device", "Device path", cxxopts::value<std::string>(), "<devpath>")
+		("v,verify", "Verify after download");
 	try
 	{
 		auto result = options.parse(argc, argv);
@@ -1373,6 +1387,10 @@ int main(int argc, const char* argv[])
 		if (result.count("restart"))
 		{
 			Restart = true;
+		}
+		if (result.count("verify"))
+		{
+			Verify = true;
 		}
 
 		if (result.count("upload"))
@@ -1400,6 +1418,15 @@ int main(int argc, const char* argv[])
 		}
 		else if (result.count("download"))
 		{
+			m_DownFileName = result["download"].as<std::string>().c_str();
+			_splitpath(m_DownFileName,Drive,Dir,Fname,Ext);
+			ptr=strupr(Ext);
+			strcpy(Ext, ptr);
+			if (!FileExist((LPCTSTR)m_DownFileName))
+			{
+				std::cout << "Error: File " << m_DownFileName << " does not exist" << std::endl;
+				return 1;
+			}
 		}
 		else if(!Restart)
 		{
@@ -1445,7 +1472,18 @@ int main(int argc, const char* argv[])
 		
 		if (m_UpFileName != "")
 		{
-			LaunchUpload();
+			if (LaunchUpload())
+			{
+				return 1;
+			}
+
+		}
+		else if (m_DownFileName != "")
+		{
+			if (LaunchUpgrade())
+			{
+				return 1;
+			}
 		}
 		else if (Restart)
 		{
