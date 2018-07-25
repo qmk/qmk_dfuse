@@ -41,11 +41,9 @@ CTime endTime ;
 CTimeSpan elapsedTime;
 
 
-CString			TmpDev[128];		  /* Symbolic Links : Max 128 devices */
 int				devIndex= 0;		  /* Total Numbers of Active DFU devices*/
 int				m_CurrentDevice = 0;  /* Selected DFU device*/
 
-DWORD			m_NbAlternates;       /* Total Numbers of alternates of Active DFU device*/ 
 int				m_CurrentTarget = 0;  /* Alternate targets*/
 
 
@@ -53,13 +51,23 @@ DWORD			m_OperationCode;
 CString			m_UpFileName = ""; //"old1.dfu";
 CString			m_DownFileName= ""; // "old.dfu";
 
+struct DeviceInfo
+{
+	CString						m_DevPath;		  /* Symbolic Links : Max 128 devices */
+	USB_DEVICE_DESCRIPTOR		m_DeviceDesc;
+	PMAPPING					m_pMapping = nullptr;
+	DFU_FUNCTIONAL_DESCRIPTOR	m_CurrDevDFUDesc;	
+	DWORD						m_NbAlternates;       /* Total Numbers of alternates of Active DFU device*/ 
+	CString						m_Prod;
+	CString						m_Error;
+};
 
-USB_DEVICE_DESCRIPTOR m_DeviceDesc;
-PMAPPING		m_pMapping;
+DeviceInfo m_DeviceInfos[128];
+
+
 HANDLE			m_BufferedImage;
-DFU_FUNCTIONAL_DESCRIPTOR	m_CurrDevDFUDesc;	
 HANDLE			hDle;
-int             HidDev_Counter ;
+int             HidDev_Counter;
 
 DFUThreadContext Context;
 DWORD dwRet;
@@ -491,7 +499,7 @@ int LaunchUpload(void)
 	HANDLE hImage;
 
 	// prepare the asynchronous operation
-	lstrcpy(Context.szDevLink, TmpDev[m_CurrentDevice]);
+	lstrcpy(Context.szDevLink, m_DeviceInfos[m_CurrentDevice].m_DevPath);
 	Context.DfuGUID=GUID_DFU;
 
 	Context.Operation=OPERATION_UPLOAD;
@@ -501,10 +509,12 @@ int LaunchUpload(void)
 	
 	CString Name; 
 
-	Name= m_pMapping[TargetSel].Name;
-	STDFUFILES_CreateImageFromMapping(&hImage, m_pMapping+TargetSel);
+	PMAPPING pMapping = m_DeviceInfos[m_CurrentDevice].m_pMapping + TargetSel;
+
+	Name= pMapping->Name;
+	STDFUFILES_CreateImageFromMapping(&hImage, pMapping);
 	STDFUFILES_SetImageName(hImage, (LPSTR)(LPCSTR)Name);
-	STDFUFILES_FilterImageForOperation(hImage, m_pMapping+TargetSel, OPERATION_UPLOAD, FALSE);
+	STDFUFILES_FilterImageForOperation(hImage, pMapping, OPERATION_UPLOAD, FALSE);
 	Context.hImage=hImage;
 
 	startTime = CTime::GetCurrentTime();
@@ -586,7 +596,7 @@ int LaunchUpgrade(void)
 	else
 	{
 		// prepare the asynchronous operation: first is erase !
-		lstrcpy(Context.szDevLink, TmpDev[m_CurrentDevice]);
+		lstrcpy(Context.szDevLink, m_DeviceInfos[m_CurrentDevice].m_DevPath);
 		Context.DfuGUID=GUID_DFU;
 		Context.Operation=OPERATION_ERASE;
 		Context.bDontSendFFTransfersForUpgrade=Optimize;
@@ -594,9 +604,9 @@ int LaunchUpgrade(void)
 			STDFUFILES_DestroyImage(&m_BufferedImage);
 		// Let's backup our data before the filtering for erase. The data will be used for the upgrade phase
 		STDFUFILES_DuplicateImage(hImage, &m_BufferedImage);
-		STDFUFILES_FilterImageForOperation(m_BufferedImage, m_pMapping+TargetSel, OPERATION_UPGRADE, Optimize);
+		STDFUFILES_FilterImageForOperation(m_BufferedImage, m_DeviceInfos[m_CurrentDevice].m_pMapping + TargetSel, OPERATION_UPGRADE, Optimize);
 
-		STDFUFILES_FilterImageForOperation(hImage, m_pMapping+TargetSel, OPERATION_ERASE, Optimize);
+		STDFUFILES_FilterImageForOperation(hImage, m_DeviceInfos[m_CurrentDevice].m_pMapping + TargetSel, OPERATION_ERASE, Optimize);
 		Context.hImage=hImage;
 
 		//printf("0 KB(0 Bytes) of %i KB(%i Bytes) \n", STDFUFILES_GetImageSize(m_BufferedImage)/1024,  STDFUFILES_GetImageSize(m_BufferedImage));
@@ -675,12 +685,12 @@ int LaunchVerify(void)
 	else
 	{
 		// prepare the asynchronous operation
-		lstrcpy(Context.szDevLink, TmpDev[m_CurrentDevice]);
+		lstrcpy(Context.szDevLink, m_DeviceInfos[m_CurrentDevice].m_DevPath);
 		Context.DfuGUID=GUID_DFU;
 		Context.Operation=OPERATION_UPLOAD;
 		if (m_BufferedImage)
 			STDFUFILES_DestroyImage(&m_BufferedImage);
-		STDFUFILES_FilterImageForOperation(hImage, m_pMapping+TargetSel, OPERATION_UPLOAD, FALSE);
+		STDFUFILES_FilterImageForOperation(hImage, m_DeviceInfos[m_CurrentDevice].m_pMapping + TargetSel, OPERATION_UPLOAD, FALSE);
 		Context.hImage=hImage;
 		// Let's backup our data before the upload. The data will be used after the upload for comparison
 		STDFUFILES_DuplicateImage(hImage, &m_BufferedImage);
@@ -712,15 +722,15 @@ void LaunchReboot()
 	CString Name;
 
 	// Prepare the asynchronous operation
-	lstrcpy(Context.szDevLink, TmpDev[m_CurrentDevice]);
+	lstrcpy(Context.szDevLink, m_DeviceInfos[m_CurrentDevice].m_DevPath);
 
 	Context.DfuGUID=GUID_DFU;
 	Context.AppGUID=GUID_APP;
 	Context.Operation=OPERATION_RETURN;
-	Name = m_pMapping[TargetSel].Name;
-	STDFUFILES_CreateImageFromMapping(&hImage, m_pMapping+TargetSel);
+	Name = m_DeviceInfos[m_CurrentDevice].m_pMapping[TargetSel].Name;
+	STDFUFILES_CreateImageFromMapping(&hImage, m_DeviceInfos[m_CurrentDevice].m_pMapping + TargetSel);
 	STDFUFILES_SetImageName(hImage, (LPSTR)(LPCSTR)Name);
-	STDFUFILES_FilterImageForOperation(hImage, m_pMapping+TargetSel, OPERATION_RETURN, FALSE);
+	STDFUFILES_FilterImageForOperation(hImage, m_DeviceInfos[m_CurrentDevice].m_pMapping + TargetSel, OPERATION_RETURN, FALSE);
 	Context.hImage=hImage;
 
 	startTime = CTime::GetCurrentTime();
@@ -748,7 +758,7 @@ int Refresh(void)
  
 	int i;
 	char	Product[253];
-	CString	Prod, String;
+	CString	String;
 
 	HDEVINFO info;
 
@@ -781,234 +791,213 @@ int Refresh(void)
 
 	// Continue with DFU devices. DFU devices will be listed after HID ones
 
-		GUID Guid=GUID_DFU;
-		devIndex=0;
+	GUID Guid=GUID_DFU;
+	devIndex=0;
 
-		for ( i=0; i< 128  ; i++ )
-		TmpDev[i]="";
 
-	
+	info=SetupDiGetClassDevs(&Guid, NULL, NULL, DIGCF_PRESENT | DIGCF_INTERFACEDEVICE);
+	if (info!=INVALID_HANDLE_VALUE)  
+	{
 
-		info=SetupDiGetClassDevs(&Guid, NULL, NULL, DIGCF_PRESENT | DIGCF_INTERFACEDEVICE);
-		if (info!=INVALID_HANDLE_VALUE)  
+		SP_INTERFACE_DEVICE_DATA ifData;
+		ifData.cbSize=sizeof(ifData);
+
+		for (devIndex=0;SetupDiEnumDeviceInterfaces(info, NULL, &Guid, devIndex, &ifData);++devIndex)
 		{
+			DWORD needed;
 
-			SP_INTERFACE_DEVICE_DATA ifData;
-			ifData.cbSize=sizeof(ifData);
+			SetupDiGetDeviceInterfaceDetail(info, &ifData, NULL, 0, &needed, NULL);
 
-			for (devIndex=0;SetupDiEnumDeviceInterfaces(info, NULL, &Guid, devIndex, &ifData);++devIndex)
+			PSP_INTERFACE_DEVICE_DETAIL_DATA detail=(PSP_INTERFACE_DEVICE_DETAIL_DATA)new BYTE[needed];
+			detail->cbSize=sizeof(SP_INTERFACE_DEVICE_DETAIL_DATA);
+			SP_DEVINFO_DATA did={sizeof(SP_DEVINFO_DATA)};
+		
+			if (SetupDiGetDeviceInterfaceDetail(info, &ifData, detail, needed, NULL, &did))
 			{
-				DWORD needed;
-
-				SetupDiGetDeviceInterfaceDetail(info, &ifData, NULL, 0, &needed, NULL);
-
-				PSP_INTERFACE_DEVICE_DETAIL_DATA detail=(PSP_INTERFACE_DEVICE_DETAIL_DATA)new BYTE[needed];
-				detail->cbSize=sizeof(SP_INTERFACE_DEVICE_DETAIL_DATA);
-				SP_DEVINFO_DATA did={sizeof(SP_DEVINFO_DATA)};
-			
-				if (SetupDiGetDeviceInterfaceDetail(info, &ifData, detail, needed, NULL, &did))
-				{
-					// Add the link to the list of all DFU devices
-
-
-					TmpDev[devIndex]=detail->DevicePath;
-				
-				}
-				else
-					TmpDev[devIndex]="";   //m_CtrlDFUDevices.AddString("");
-
-				if (SetupDiGetDeviceRegistryProperty(info, &did, SPDRP_DEVICEDESC, NULL, (PBYTE)Product, 253, NULL))
-				{ 
-					Prod= Product;
-					
-				}
-				else
-					Prod="(Unnamed DFU device)";
-				// Add the name of the device
-				//m_CtrlDevices.AddString(Prod);
-				delete[] (PBYTE)detail;
+				// Add the link to the list of all DFU devices
+				m_DeviceInfos[devIndex].m_DevPath=detail->DevicePath;
 			}
-			SetupDiDestroyDeviceInfoList(info);
-		}
-
-
-		if (m_pMapping!=NULL)
-		STDFUPRT_DestroyMapping(&m_pMapping);
-		m_pMapping=NULL;
-		m_NbAlternates=0;
-
-
-		if ( devIndex > 0 )
-
-		{
-
-
-			if (STDFU_Open((LPSTR)(LPCSTR)TmpDev[m_CurrentDevice],&hDle)==STDFU_NOERROR)   //  !!!! To be changed
+			else
 			{
-				if (STDFU_GetDeviceDescriptor(&hDle, &m_DeviceDesc)==STDFU_NOERROR)
+				m_DeviceInfos[devIndex].m_DevPath = "";   //m_CtrlDFUDevices.AddString("");
+			}
+
+			if (SetupDiGetDeviceRegistryProperty(info, &did, SPDRP_DEVICEDESC, NULL, (PBYTE)Product, 253, NULL))
+			{ 
+				m_DeviceInfos[devIndex].m_Prod = Product;
+			}
+			else
+			{
+				m_DeviceInfos[devIndex].m_Prod = "(Unnamed DFU device)";
+			}
+			// Add the name of the device
+			//m_CtrlDevices.AddString(Prod);
+			delete[] (PBYTE)detail;
+
+			DeviceInfo& devInfo = m_DeviceInfos[devIndex];
+
+			if (STDFU_Open((LPSTR)(LPCSTR)devInfo.m_DevPath, &hDle) == STDFU_NOERROR)   //  !!!! To be changed
+			{
+				if (STDFU_GetDeviceDescriptor(&hDle, &devInfo.m_DeviceDesc) == STDFU_NOERROR)
 				{
 					UINT Dummy1, Dummy2;
 					// Get its attributes
-					memset(&m_CurrDevDFUDesc, 0, sizeof(m_CurrDevDFUDesc));
-					if (STDFU_GetDFUDescriptor(&hDle, &Dummy1, &Dummy2, &m_CurrDevDFUDesc)==STDFUPRT_NOERROR)
+					memset(&devInfo.m_CurrDevDFUDesc, 0, sizeof(devInfo.m_CurrDevDFUDesc));
+					if (STDFU_GetDFUDescriptor(&hDle, &Dummy1, &Dummy2, &devInfo.m_CurrDevDFUDesc) == STDFUPRT_NOERROR)
 					{
-				
-
-						if ( (m_CurrDevDFUDesc.bcdDFUVersion<0x011A) || (m_CurrDevDFUDesc.bcdDFUVersion>=0x0120) )
-						{	
-							if ( m_CurrDevDFUDesc.bcdDFUVersion != 0)
-							printf("Bad DFU protocol version. Should be 1.1A");
-							fflush(NULL);							
+						if ((devInfo.m_CurrDevDFUDesc.bcdDFUVersion < 0x011A) || (devInfo.m_CurrDevDFUDesc.bcdDFUVersion >= 0x0120))
+						{
+							if (devInfo.m_CurrDevDFUDesc.bcdDFUVersion != 0)
+							{
+								m_DeviceInfos[devIndex].m_Error = "Bad DFU protocol version. Should be 1.1A";
+							}
 						}
 						else
 						{
-							
-				
+							PUSB_DEVICE_DESCRIPTOR Desc = NULL;
 
-								PUSB_DEVICE_DESCRIPTOR Desc=NULL;
-
-								
-								// Tries to get the mapping
-								if (STDFUPRT_CreateMappingFromDevice((LPSTR)(LPCSTR)TmpDev[m_CurrentDevice], &m_pMapping, &m_NbAlternates)==STDFUPRT_NOERROR)
-								{
-								
-									bSuccess=TRUE;								
-								}
-								else
-								printf("Unable to find or decode device mapping... Bad Firmware");
-								fflush(NULL);
+							// Tries to get the mapping
+							if (STDFUPRT_CreateMappingFromDevice((LPSTR)(LPCSTR)devInfo.m_DevPath, &devInfo.m_pMapping, &devInfo.m_NbAlternates) == STDFUPRT_NOERROR)
+							{
+								bSuccess = TRUE;
+							}
+							else
+							{
+								m_DeviceInfos[devIndex].m_Error = "Unable to find or decode device mapping... Bad Firmware";
 							}
 						}
 					}
 					else
-						{printf("Unable to get DFU descriptor... Bad Firmware");
-						fflush(NULL); }
+					{
+						m_DeviceInfos[devIndex].m_Error = "Unable to get DFU descriptor... Bad Firmware";
+					}
 				}
 				else
-					{printf("Unable to get descriptors... Bad Firmware");
-					fflush(NULL);}
-
-
-			/* Device ID and Unique ID may be added by  user */
-			
-			/*
-			
-			LPBYTE m_pBuffer = (LPBYTE)malloc(64);
-			memset(m_pBuffer, 0x00, 64);
-		
-			{
-				DFUSTATUS DFUStatus;
-
-				STDFU_Getstatus(&hDle, &DFUStatus);
-				while (DFUStatus.bState != STATE_DFU_IDLE)
 				{
-					STDFU_Clrstatus(&hDle);
-					STDFU_Getstatus(&hDle, &DFUStatus);
-				}
-
-				m_pBuffer[0] = 0x21;
-				m_pBuffer[1] = 0x00;
-				m_pBuffer[2] = 0x20;
-				m_pBuffer[3] = 0x04;
-				m_pBuffer[4] = 0xE0;
-
-				STDFU_Dnload(&hDle, m_pBuffer, 0x05, 0);
-
-				STDFU_Getstatus(&hDle, &DFUStatus);
-				while (DFUStatus.bState != STATE_DFU_IDLE)
-				{
-					STDFU_Clrstatus(&hDle);
-					STDFU_Getstatus(&hDle, &DFUStatus);
-				}
-
-				if (STDFU_Upload(&hDle, m_pBuffer, 4, 2) == STDFU_NOERROR)
-				{	
-					printf("Device DID :");
-					fflush(NULL);
-					for (i = 0; i < 4; i++)
-					{
-						printf("0x%02x ", m_pBuffer[i]);
-						fflush(NULL);
-					}
-					printf("\n");
-					fflush(NULL);
-
+					m_DeviceInfos[devIndex].m_Error = "Unable to get descriptors... Bad Firmware";
 				}
 			}
-
-			memset(m_pBuffer, 0x00, 64);
-		
-			{
-				DFUSTATUS DFUStatus;
-
-				STDFU_Getstatus(&hDle, &DFUStatus);
-				while (DFUStatus.bState != STATE_DFU_IDLE)
-				{
-					STDFU_Clrstatus(&hDle);
-					STDFU_Getstatus(&hDle, &DFUStatus);
-				}
-
-				m_pBuffer[0] = 0x21;
-				m_pBuffer[1] = 0x10;
-				m_pBuffer[2] = 0x7A;
-				m_pBuffer[3] = 0xFF;
-				m_pBuffer[4] = 0x1F;
-
-				STDFU_Dnload(&hDle, m_pBuffer, 0x05, 0);
-
-				STDFU_Getstatus(&hDle, &DFUStatus);
-				while (DFUStatus.bState != STATE_DFU_IDLE)
-				{
-					STDFU_Clrstatus(&hDle);
-					STDFU_Getstatus(&hDle, &DFUStatus);
-				}
-
-				if (STDFU_Upload(&hDle, m_pBuffer, 12, 2) == STDFU_NOERROR)
-				{	
-					printf("Device UID :");
-					fflush(NULL);
-					for (i = 0; i < 12; i++)
-					{
-						printf("0x%02x ", m_pBuffer[i]);
-						fflush(NULL);
-					}
-					printf("\n");
-					fflush(NULL);
-
-				}
-			}
-
-			*/
-
 			STDFU_Close(&hDle);
+		}
+		SetupDiDestroyDeviceInfoList(info);
+	}
 
-
+	if ( devIndex > 0 )
+	{
 		printf("%d Device(s) found : \n",devIndex );
 		fflush(NULL);
 		for ( i=0; i< devIndex  ; i++ )
 		{
-		printf("Device [%d]: %s, having [%d] alternate targets \n",devIndex, Prod, m_NbAlternates);
+			if (m_DeviceInfos[i].m_Error == "")
+			{
+				printf("Device [%d]: %s, having [%d] alternate targets \n", i, (LPCSTR)m_DeviceInfos[i].m_Prod, m_DeviceInfos[i].m_NbAlternates);
+			}
+			else
+			{
+				printf("Device [%d]: %s\n", i, (LPCSTR)m_DeviceInfos[i].m_Error);
+			}
+		}
 		fflush(NULL);
-		}
-
-
 		return 0;
-		
+	}
+	else 
+	{
 
+		printf("No devices found. Plug your DFU Device ! \n");
+		fflush(NULL);
+		return 1 ;  /* No devices */
+	}
+	
+	/* Device ID and Unique ID may be added by  user */
+	
+	/*
+	
+	LPBYTE m_pBuffer = (LPBYTE)malloc(64);
+	memset(m_pBuffer, 0x00, 64);
 
-		}
-		else 
-			
+	{
+		DFUSTATUS DFUStatus;
+
+		STDFU_Getstatus(&hDle, &DFUStatus);
+		while (DFUStatus.bState != STATE_DFU_IDLE)
 		{
+			STDFU_Clrstatus(&hDle);
+			STDFU_Getstatus(&hDle, &DFUStatus);
+		}
 
-			printf("%d Device(s) found. Plug your DFU Device ! \n",devIndex );
+		m_pBuffer[0] = 0x21;
+		m_pBuffer[1] = 0x00;
+		m_pBuffer[2] = 0x20;
+		m_pBuffer[3] = 0x04;
+		m_pBuffer[4] = 0xE0;
+
+		STDFU_Dnload(&hDle, m_pBuffer, 0x05, 0);
+
+		STDFU_Getstatus(&hDle, &DFUStatus);
+		while (DFUStatus.bState != STATE_DFU_IDLE)
+		{
+			STDFU_Clrstatus(&hDle);
+			STDFU_Getstatus(&hDle, &DFUStatus);
+		}
+
+		if (STDFU_Upload(&hDle, m_pBuffer, 4, 2) == STDFU_NOERROR)
+		{	
+			printf("Device DID :");
 			fflush(NULL);
-		  return 1 ;  /* No devices */
+			for (i = 0; i < 4; i++)
+			{
+				printf("0x%02x ", m_pBuffer[i]);
+				fflush(NULL);
+			}
+			printf("\n");
+			fflush(NULL);
 
 		}
-	
-	
+	}
 
+	memset(m_pBuffer, 0x00, 64);
+
+	{
+		DFUSTATUS DFUStatus;
+
+		STDFU_Getstatus(&hDle, &DFUStatus);
+		while (DFUStatus.bState != STATE_DFU_IDLE)
+		{
+			STDFU_Clrstatus(&hDle);
+			STDFU_Getstatus(&hDle, &DFUStatus);
+		}
+
+		m_pBuffer[0] = 0x21;
+		m_pBuffer[1] = 0x10;
+		m_pBuffer[2] = 0x7A;
+		m_pBuffer[3] = 0xFF;
+		m_pBuffer[4] = 0x1F;
+
+		STDFU_Dnload(&hDle, m_pBuffer, 0x05, 0);
+
+		STDFU_Getstatus(&hDle, &DFUStatus);
+		while (DFUStatus.bState != STATE_DFU_IDLE)
+		{
+			STDFU_Clrstatus(&hDle);
+			STDFU_Getstatus(&hDle, &DFUStatus);
+		}
+
+		if (STDFU_Upload(&hDle, m_pBuffer, 12, 2) == STDFU_NOERROR)
+		{	
+			printf("Device UID :");
+			fflush(NULL);
+			for (i = 0; i < 12; i++)
+			{
+				printf("0x%02x ", m_pBuffer[i]);
+				fflush(NULL);
+			}
+			printf("\n");
+			fflush(NULL);
+
+		}
+	}
+
+	*/
 }
 
 
@@ -1209,10 +1198,11 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 							PUSB_DEVICE_DESCRIPTOR Desc=NULL;
 
 							WORD Vid, Pid, Bcd;
+							auto& deviceDesk = m_DeviceInfos[m_CurrentDevice].m_DeviceDesc;
 
-							Vid=m_DeviceDesc.idVendor;
-							Pid=m_DeviceDesc.idProduct;
-							Bcd=m_DeviceDesc.bcdDevice;
+							Vid=deviceDesk.idVendor;
+							Pid=deviceDesk.idProduct;
+							Bcd=deviceDesk.bcdDevice;
 
 							/*Desc=(PUSB_DEVICE_DESCRIPTOR)(&m_CurrDevDFUDesc);
 							if ( (Desc) && (Desc->bLength) )
@@ -1498,8 +1488,8 @@ void OnCancel()
 			STDFUFILES_DestroyImage(&m_BufferedImage);
 
 	//	KillTimer(1);
-		if (m_pMapping!=NULL)
-			STDFUPRT_DestroyMapping(&m_pMapping);
+		if (m_DeviceInfos[m_CurrentDevice].m_pMapping!=NULL)
+			STDFUPRT_DestroyMapping(&m_DeviceInfos[m_CurrentDevice].m_pMapping);
 	/*	POSITION Pos=m_DetachedDevs.GetStartPosition();
 		while (Pos)
 		{
@@ -1510,9 +1500,6 @@ void OnCancel()
 			delete (PUSB_DEVICE_DESCRIPTOR)Value;
 		}
 		m_DetachedDevs.RemoveAll();*/
-		m_pMapping=NULL;
-		m_NbAlternates=0;
-	
 	}
 }
 
