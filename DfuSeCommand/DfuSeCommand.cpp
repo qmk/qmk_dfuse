@@ -1345,14 +1345,14 @@ int main(int argc, const char* argv[])
 				m_UpFileName = result["upload"].as<std::string>().c_str();
 				if(!FileExist((LPCTSTR)m_UpFileName))
 				{
-					printf( "file %s does not exist .. Creating file\n", m_UpFileName);
+					printf( "file %s does not exist .. Creating file\n", (LPCSTR)m_UpFileName);
 					fflush(NULL);
 					FILE* fp = fopen((LPCTSTR)m_UpFileName, "a+");
 					fclose(fp);
 				}
 				else
 				{
-					printf( "file %s exists .. Overwriting\n", m_UpFileName);
+					printf( "file %s exists .. Overwriting\n", (LPCSTR)m_UpFileName);
 					fflush(NULL);
 				}
 			}
