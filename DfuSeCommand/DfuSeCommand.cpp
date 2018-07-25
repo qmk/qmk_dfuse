@@ -1008,22 +1008,17 @@ void Refresh()
 
 void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime) 
 {
-
-
 	DFUThreadContext Context;
 	CString Tmp;
 	DWORD dwRet;
 
-
 	if (m_OperationCode)  
 	{
-
 		endTime = CTime::GetCurrentTime();
 		elapsedTime = endTime - startTime;
 	
 		printf( " Duration: %.2i:%.2i:%.2i", elapsedTime.GetHours(),elapsedTime.GetMinutes(),elapsedTime.GetSeconds());
 		fflush(NULL);
-
 
 		CString Tmp, Tmp2;
 
@@ -1047,37 +1042,16 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 
 			m_OperationCode=0;
 			if (Context.ErrorCode==STDFUPRT_UNSUPPORTEDFEATURE)
-				//AfxMessageBox("This feature is not supported by this firmware.");
-			{	printf("This feature is not supported by this firmware.");
+			{
+				printf("This feature is not supported by this firmware.");
 				fflush(NULL);
-				}
+			}
 			else
-			
 			{ 
 				HandleError(&Context);
 				KillTimer(hWnd, nIDEvent);
 				PostQuitMessage (1) ;
 			}
-				
-			// Did we have an error: let's stop all and display the problem
-			/*if (Context.Operation==OPERATION_DETACH)
-			{
-				
-			
-			}
-			else
-			{
-				if (Context.Operation==OPERATION_RETURN)
-					m_DetachedDev=""
-
-				
-			}*/
-			//m_CurrentTarget=-1;
-			//Refresh();
-				
-
-
-			// Refresh();
 		}
 		else
 		{
@@ -1088,14 +1062,8 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 				  Tmp.Format("\rTarget %02i: Uploading (%i%%)...", m_CurrentTarget, Context.Percent);
 				  printf(Tmp);
 				  fflush(NULL);
-
 				  //printf("%i KB(%i Bytes) of %i KB(%i Bytes) \n", ((STDFUFILES_GetImageSize(Context.hImage)/1024)*Context.Percent)/100,  (STDFUFILES_GetImageSize(Context.hImage)*Context.Percent)/100, STDFUFILES_GetImageSize(Context.hImage)/1024,  STDFUFILES_GetImageSize(Context.hImage));
-	
-
-
 				 // m_DataSize.Format("%i KB(%i Bytes) of %i KB(%i Bytes)", ((STDFUFILES_GetImageSize(Context.hImage)/1024)*Context.Percent)/100,  (STDFUFILES_GetImageSize(Context.hImage)*Context.Percent)/100, STDFUFILES_GetImageSize(Context.hImage)/1024,  STDFUFILES_GetImageSize(Context.hImage));
-	
-
 				  break;
 				}
 			case OPERATION_UPGRADE:
@@ -1103,35 +1071,26 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 				  Tmp.Format("\rTarget %02i: Upgrading - Download Phase (%i%%)...", m_CurrentTarget, Context.Percent);
 				  printf(Tmp);
 				  fflush(NULL);
-
 				  //printf("%i KB(%i Bytes) of %i KB(%i Bytes) \n", ((STDFUFILES_GetImageSize(Context.hImage)/1024)*Context.Percent)/100,  (STDFUFILES_GetImageSize(Context.hImage)*Context.Percent)/100, STDFUFILES_GetImageSize(Context.hImage)/1024,  STDFUFILES_GetImageSize(Context.hImage));
-	
 				  //m_DataSize.Format("%i KB(%i Bytes) of %i KB(%i Bytes)", ((STDFUFILES_GetImageSize(Context.hImage)/1024)*Context.Percent)/100,  (STDFUFILES_GetImageSize(Context.hImage)*Context.Percent)/100, STDFUFILES_GetImageSize(Context.hImage)/1024,  STDFUFILES_GetImageSize(Context.hImage));
-	
-
 				  break;
 				}
 			case OPERATION_DETACH:
 				Tmp.Format("\rDetaching (%i%%)...", Context.Percent);
 				 printf(Tmp);
 				 fflush(NULL);
-
 				break;
 			case OPERATION_RETURN:
 				Tmp.Format("\rLeaving DFU mode (%i%%)...", Context.Percent);
 				 printf(Tmp);
 				 fflush(NULL);
-
 				break;
 			default:
 				Tmp.Format("\rTarget %02i: Upgrading - Erase Phase (%i%%)...", m_CurrentTarget, Context.Percent);
 				printf(Tmp);
-
 				break;
 			}
 
-		//	m_Progress.SetWindowText(Tmp);
-		//	m_Progress.SetPos(Context.Percent);
 			if (Context.Percent==100)
 			{
 				if (Context.Operation==OPERATION_ERASE)
@@ -1147,7 +1106,6 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 					{
 						Context.ErrorCode=dwRet;
 						HandleError(&Context);
-									//	printf( "Error");
 						KillTimer(hWnd, nIDEvent);
 						PostQuitMessage (0) ;
 					}
@@ -1155,36 +1113,14 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 				else
 				{
 					BOOL bAllTargetsFinished=TRUE;
-
 					STDFUPRT_StopOperation(m_OperationCode, &Context);
-					//m_Progress.SetPos(100);
 					m_OperationCode=0;
-
-					//int Sel=m_CtrlDevices.GetCurSel();
 					if (Context.Operation==OPERATION_RETURN)
 					{
-						/*delete m_DetachedDevs[m_DetachedDev];
-						m_DetachedDevs.RemoveKey(m_DetachedDev);
-						if (Sel!=-1)
-						{
-							m_CtrlDFUDevices.InsertString(Sel, Context.szDevLink);
-							m_CurrDFUName=Context.szDevLink;
-						}*/
 						HandleTxtSuccess("\nSuccessfully left DFU mode !\n");
 					}
 					if (Context.Operation==OPERATION_DETACH) 
 					{
-						/*CString Tmp=Context.szDevLink;
-
-						Tmp.MakeUpper();
-						m_DetachedDevs[Tmp]=m_DetachedDevs[m_DetachedDev];
-						((PUSB_DEVICE_DESCRIPTOR)(m_DetachedDevs[Tmp]))->bLength=18;
-						m_DetachedDevs.RemoveKey(m_DetachedDev);
-						if (Sel!=-1)
-						{
-							m_CtrlDFUDevices.InsertString(Sel, Context.szDevLink);
-							m_CurrDFUName=Context.szDevLink;
-						}*/
 						HandleTxtSuccess("\nSuccessfully detached !\n");
 					}
 					if (Context.Operation==OPERATION_UPLOAD)
@@ -1201,19 +1137,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 							Pid=deviceDesk.idProduct;
 							Bcd=deviceDesk.bcdDevice;
 
-							/*Desc=(PUSB_DEVICE_DESCRIPTOR)(&m_CurrDevDFUDesc);
-							if ( (Desc) && (Desc->bLength) )
-							{
-								Vid=Desc->idVendor;
-								Pid=Desc->idProduct;
-								Bcd=Desc->bcdDevice;
-							}*/
-
-							//if (m_CtrlDevTargets.GetNextItem(-1, LVIS_SELECTED)==m_CurrentTarget)
-								dwRet=STDFUFILES_CreateNewDFUFile((LPSTR)(LPCSTR)m_UpFileName, &hFile, Vid, Pid, Bcd);
-							//else
-							//	dwRet=STDFUFILES_OpenExistingDFUFile((LPSTR)(LPCSTR)m_UpFileName, &hFile, NULL, NULL, NULL, NULL);
-
+							dwRet=STDFUFILES_CreateNewDFUFile((LPSTR)(LPCSTR)m_UpFileName, &hFile, Vid, Pid, Bcd);
 
 							if (dwRet==STDFUFILES_NOERROR)
 							{
@@ -1222,25 +1146,21 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 								{
 									printf("Upload successful !\n");
 									fflush(NULL);
-									//m_CurrentTarget=m_CtrlDevTargets.GetNextItem(m_CurrentTarget, LVIS_SELECTED);
-									/*if (m_CurrentTarget>=0)
-									{
-										bAllTargetsFinished=FALSE;
-										LaunchUpload();
-									}*/
-
 									KillTimer(hWnd, nIDEvent);
 									PostQuitMessage (0) ;
 								}
 								else
-									{ printf("Unable to append image to DFU file...");
-									fflush(NULL); }
+								{
+									printf("Unable to append image to DFU file...");
+									fflush(NULL);
+								}
 								STDFUFILES_CloseDFUFile(hFile);
 							}
 							else
-								{ printf("Unable to create a new DFU file...");
+							{
+								printf("Unable to create a new DFU file...");
 								fflush(NULL);
-								}
+							}
 						}
 						else // This was a verify
 						{
@@ -1322,35 +1242,20 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 							if (bSuccess)
 							{
 								if (!bDifferent)
-									{printf("\nVerify successful !\n");
-									fflush(NULL);}
-								/*m_CurrentTarget=m_CtrlDevTargets.GetNextItem(m_CurrentTarget, LVIS_SELECTED);
-								if (m_CurrentTarget>=0)
 								{
-									bAllTargetsFinished=FALSE;
-									LaunchVerify();
-								}*/
-
-									KillTimer(hWnd, nIDEvent);
-									PostQuitMessage (0) ;							 
-
+									printf("\nVerify successful !\n");
+									fflush(NULL);
+								}
+								KillTimer(hWnd, nIDEvent);
+								PostQuitMessage (0) ;
 							}
 						}
-
 					} 
 					if (Context.Operation==OPERATION_UPGRADE)
 					{
 						printf("\nUpgrade successful !\n");
 						fflush(NULL);
 						m_BufferedImage=0;
-
-						
-						/*m_CurrentTarget=m_CtrlDevTargets.GetNextItem(m_CurrentTarget, LVIS_SELECTED);
-						if (m_CurrentTarget>=0)
-						{
-							bAllTargetsFinished=FALSE;
-							LaunchUpgrade();
-						}*/
 					}
 					if (bAllTargetsFinished)
 					{
@@ -1358,60 +1263,19 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 						{
 							if (Verify)
 							{
-								// After the upgrade , relaunch the Upgrade verify !
-								CString Tempo, DevId, FileId;
-
-								//m_CurrentTarget=m_CtrlDevTargets.GetNextItem(-1, LVIS_SELECTED);
-								/*if (m_CurrentTarget==-1)
-								{
-									HandleTxtError("Please select one or several targets before !");
-									return;
-								}
-
-								m_CtrlDevAppVid.GetWindowText(DevId);
-								if (DevId.IsEmpty())
-								{
-									if (AfxMessageBox("Your device was plugged in DFU mode. \nSo it is impossible to make sure this file is correct for this device.\n\nContinue however ?", MB_YESNO)!=IDYES)
-										return;
-								}
-								else
-								{
-									m_CtrlFileVid.GetWindowText(FileId);
-									if (FileId!=DevId)
-									{
-										if (AfxMessageBox("This file is not supposed to be used with that device.\n\nContinue however ?", MB_YESNO)!=IDYES)
-											return;
-									}
-									else
-									{
-										m_CtrlDevAppPid.GetWindowText(DevId);
-										m_CtrlFilePid.GetWindowText(FileId);
-										if (FileId!=DevId)
-										{
-											if (AfxMessageBox("This file is not supposed to be used with that device.\n\nContinue however ?", MB_YESNO)!=IDYES)
-												return;
-										}
-									}
-								}*/
-
-							 LaunchVerify();
+								LaunchVerify();
 							}
 							else
 							{ 
-							
 								KillTimer(hWnd, nIDEvent);
-									PostQuitMessage (0) ;
+								PostQuitMessage (0) ;
 							}
-
-							
 						}
 						if ( (Context.Operation==OPERATION_UPLOAD) &&
 							 (m_UpFileName.CompareNoCase(m_DownFileName)==0) )
 						{
 							BYTE NbTargets;
 							HANDLE hFile;
-
-						//	m_CtrlFileTargets.ResetContent();
 							if (STDFUFILES_OpenExistingDFUFile((LPSTR)(LPCSTR)m_UpFileName, &hFile, NULL, NULL, NULL, &NbTargets)==STDFUFILES_NOERROR)
 							{
 								for (int i=0;i<NbTargets;i++)
@@ -1427,8 +1291,6 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 										{
 											STDFUFILES_GetImageName(Image, Name);
 											Tempo.Format("%02i\t%s", Alt, Name);
-
-										//	m_CtrlFileTargets.AddString(Tempo);
 										}
 										STDFUFILES_DestroyImage(&Image);
 									}
@@ -1446,14 +1308,12 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 						{
 						
 						}
-					}					
+					}
 					STDFUFILES_DestroyImage(&Context.hImage);
 				}
 			}
 		}
 	}
-
-
 }
 
 /*******************************************************************************************/
