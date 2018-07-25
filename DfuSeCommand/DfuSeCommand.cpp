@@ -48,8 +48,8 @@ int				m_CurrentTarget = 0;  /* Alternate targets*/
 
 
 DWORD			m_OperationCode;
-CString			m_UpFileName = ""; //"old1.dfu";
-CString			m_DownFileName= ""; // "old.dfu";
+CString			m_UpFileName = "";
+CString			m_DownFileName= "";
 
 struct DeviceInfo
 {
@@ -1112,16 +1112,19 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 				}
 				else
 				{
-					BOOL bAllTargetsFinished=TRUE;
 					STDFUPRT_StopOperation(m_OperationCode, &Context);
 					m_OperationCode=0;
 					if (Context.Operation==OPERATION_RETURN)
 					{
 						HandleTxtSuccess("\nSuccessfully left DFU mode !\n");
+						KillTimer(hWnd, nIDEvent);
+						PostQuitMessage (0) ;
 					}
 					if (Context.Operation==OPERATION_DETACH) 
 					{
 						HandleTxtSuccess("\nSuccessfully detached !\n");
+						KillTimer(hWnd, nIDEvent);
+						PostQuitMessage (0) ;
 					}
 					if (Context.Operation==OPERATION_UPLOAD)
 					{
@@ -1145,14 +1148,22 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 								if (dwRet==STDFUFILES_NOERROR)
 								{
 									printf("Upload successful !\n");
-									fflush(NULL);
-									KillTimer(hWnd, nIDEvent);
-									PostQuitMessage (0) ;
+									if (Restart)
+									{
+										LaunchReboot();
+									}
+									else
+									{ 
+										fflush(NULL);
+										KillTimer(hWnd, nIDEvent);
+										PostQuitMessage (0) ;
+									}
 								}
 								else
 								{
 									printf("Unable to append image to DFU file...");
 									fflush(NULL);
+									PostQuitMessage(1);
 								}
 								STDFUFILES_CloseDFUFile(hFile);
 							}
@@ -1160,6 +1171,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 							{
 								printf("Unable to create a new DFU file...");
 								fflush(NULL);
+								PostQuitMessage(1);
 							}
 						}
 						else // This was a verify
@@ -1239,15 +1251,23 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 
 							STDFUFILES_DestroyImage(&m_BufferedImage);
 							m_BufferedImage=0;
+							KillTimer(hWnd, nIDEvent);
 							if (bSuccess)
 							{
 								if (!bDifferent)
 								{
 									printf("\nVerify successful !\n");
 									fflush(NULL);
+									PostQuitMessage (0) ;
 								}
-								KillTimer(hWnd, nIDEvent);
-								PostQuitMessage (0) ;
+								else
+								{
+									PostQuitMessage(1);
+								}
+							}
+							else
+							{
+								PostQuitMessage(1);
 							}
 						}
 					} 
@@ -1256,60 +1276,16 @@ void CALLBACK TimerProc(HWND hWnd, UINT nMsg, UINT nIDEvent, DWORD dwTime)
 						printf("\nUpgrade successful !\n");
 						fflush(NULL);
 						m_BufferedImage=0;
-					}
-					if (bAllTargetsFinished)
-					{
-						if ( (Context.Operation==OPERATION_UPGRADE))
+						if (Verify)
 						{
-							if (Verify)
-							{
-								LaunchVerify();
-							}
-							else
-							{ 
-								KillTimer(hWnd, nIDEvent);
-								PostQuitMessage (0) ;
-							}
+							LaunchVerify();
 						}
-						if ( (Context.Operation==OPERATION_UPLOAD) &&
-							 (m_UpFileName.CompareNoCase(m_DownFileName)==0) )
-						{
-							BYTE NbTargets;
-							HANDLE hFile;
-							if (STDFUFILES_OpenExistingDFUFile((LPSTR)(LPCSTR)m_UpFileName, &hFile, NULL, NULL, NULL, &NbTargets)==STDFUFILES_NOERROR)
-							{
-								for (int i=0;i<NbTargets;i++)
-								{
-									HANDLE Image;
-									BYTE Alt;
-									CString Tempo;
-									char Name[MAX_PATH];
-
-									if (STDFUFILES_ReadImageFromDFUFile(hFile, i, &Image)==STDFUFILES_NOERROR)
-									{
-										if (STDFUFILES_GetImageAlternate(Image, &Alt)==STDFUFILES_NOERROR)
-										{
-											STDFUFILES_GetImageName(Image, Name);
-											Tempo.Format("%02i\t%s", Alt, Name);
-										}
-										STDFUFILES_DestroyImage(&Image);
-									}
-								}
-								STDFUFILES_CloseDFUFile(hFile);
-							}
-						}
-
-						if ( (Context.Operation==OPERATION_DETACH) || (Context.Operation==OPERATION_RETURN) )
-						{
+						else
+						{ 
 							KillTimer(hWnd, nIDEvent);
 							PostQuitMessage (0) ;
 						}
-						else
-						{
-						
-						}
 					}
-					STDFUFILES_DestroyImage(&Context.hImage);
 				}
 			}
 		}
@@ -1394,6 +1370,11 @@ int main(int argc, const char* argv[])
 			std::cout << options.help() << std::endl;
 			return 0;
 		}
+		if (result.count("restart"))
+		{
+			Restart = true;
+		}
+
 		if (result.count("upload"))
 		{
 			if (result.count("download"))
@@ -1420,11 +1401,7 @@ int main(int argc, const char* argv[])
 		else if (result.count("download"))
 		{
 		}
-		else if (result.count("restart"))
-		{
-			Restart = true;
-		}
-		else
+		else if(!Restart)
 		{
 			ShowArgError(options, "Please specify either upload, download and/or restart");
 		}
