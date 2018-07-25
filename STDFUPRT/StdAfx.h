@@ -20,8 +20,6 @@
 //  or project specific include files that are used frequently, but
 //      are changed infrequently
 //
-#define WINVER 0x0501
-
 
 #if !defined(AFX_STDAFX_H__450D2D72_CF2A_46D9_B87A_3E615A00DE49__INCLUDED_)
 #define AFX_STDAFX_H__450D2D72_CF2A_46D9_B87A_3E615A00DE49__INCLUDED_
