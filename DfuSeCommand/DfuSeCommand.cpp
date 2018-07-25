@@ -488,36 +488,57 @@ int LaunchUpgrade(void)
 	int i, TargetSel=m_CurrentTarget;
 	HANDLE hImage;
 	
-
-	// Get the image of the selected target
-	dwRet=STDFUFILES_OpenExistingDFUFile((LPSTR)(LPCSTR)m_DownFileName, &hFile, NULL, NULL, NULL, &NbTargets);
-	if (dwRet==STDFUFILES_NOERROR)
+	if (CString(Ext).CompareNoCase(".dfu") == 0)
 	{
-		for (i=0;i<NbTargets;i++)
+		// Get the image of the selected target
+		dwRet = STDFUFILES_OpenExistingDFUFile((LPSTR)(LPCSTR)m_DownFileName, &hFile, NULL, NULL, NULL, &NbTargets);
+		if (dwRet == STDFUFILES_NOERROR)
 		{
-			HANDLE Image;
-			BYTE Alt;
-
-			if (STDFUFILES_ReadImageFromDFUFile(hFile, i, &Image)==STDFUFILES_NOERROR)
+			for (i = 0; i < NbTargets; i++)
 			{
-				if (STDFUFILES_GetImageAlternate(Image, &Alt)==STDFUFILES_NOERROR)
+				HANDLE Image;
+				BYTE Alt;
+
+				if (STDFUFILES_ReadImageFromDFUFile(hFile, i, &Image) == STDFUFILES_NOERROR)
 				{
-					if (Alt==TargetSel)
+					if (STDFUFILES_GetImageAlternate(Image, &Alt) == STDFUFILES_NOERROR)
 					{
-						hImage=Image;
-						bFound=TRUE;
-						break;
+						if (Alt == TargetSel)
+						{
+							hImage = Image;
+							bFound = TRUE;
+							break;
+						}
 					}
+					STDFUFILES_DestroyImage(&Image);
 				}
-				STDFUFILES_DestroyImage(&Image);
 			}
+			STDFUFILES_CloseDFUFile(hFile);
 		}
-		STDFUFILES_CloseDFUFile(hFile);
+		else
+		{
+			Context.ErrorCode = dwRet;
+			HandleError(&Context);
+		}
+	}
+	else if (CString(Ext).CompareNoCase(".hex") == 0)
+	{
+		HANDLE Image;
+		if (STDFUFILES_ImageFromFile((LPSTR)(LPCSTR)m_DownFileName, &Image, 0) == STDFUFILES_NOERROR)
+		{
+			hImage = Image;
+			bFound = true;
+		}
+		else
+		{
+			HandleTxtError("Could not open the hex file");
+			return 1;
+		}
 	}
 	else
 	{
-		Context.ErrorCode=dwRet;
-		HandleError(&Context);
+		HandleTxtError("Invalid target file extension, only dfu or hex accepted");
+		return 1;
 	}
 
 	if (!bFound)
