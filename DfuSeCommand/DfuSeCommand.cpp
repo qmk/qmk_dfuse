@@ -761,7 +761,7 @@ void Refresh()
 
 	// Continue with DFU devices. DFU devices will be listed after HID ones
 
-	//GUID Guid=GUID_DFU;
+	GUID DfuGuid=GUID_DFU;
 	GUID Guid = GUID_DEVINTERFACE_USB_DEVICE;
 	devIndex=0;
 
@@ -776,6 +776,12 @@ void Refresh()
 		for (int i=0;SetupDiEnumDeviceInterfaces(info, NULL, &Guid, i, &ifData);++i)
 		{
 			DWORD needed;
+			SP_INTERFACE_DEVICE_DATA otherIfData;
+			otherIfData.cbSize=sizeof(ifData);
+			if (SetupDiGetDeviceInterfaceAlias(info, &ifData, &DfuGuid, &otherIfData))
+			{
+				memcpy(&ifData, &otherIfData, sizeof(SP_INTERFACE_DEVICE_DATA));
+			}
 
 			SetupDiGetDeviceInterfaceDetail(info, &ifData, NULL, 0, &needed, NULL);
 
