@@ -1351,7 +1351,7 @@ void ShowArgError(const cxxopts::Options& options, const std::string& message)
 
 int main(int argc, const char* argv[])
 {
-	cxxopts::Options options("qmk-dfuse", "DfuSe programmer for QMK v1.02");
+	cxxopts::Options options("qmk-dfuse", "DfuSe programmer for QMK v1.03");
 	options.add_options()
 		("h,help", "Print this help message")
 		("u,upload", "Read firmware from device into <file>", cxxopts::value<std::string>(), "<file>")
