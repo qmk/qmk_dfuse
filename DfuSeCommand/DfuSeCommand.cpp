@@ -30,8 +30,8 @@
 #include <dos.h>
 #include <windows.h>
 #include "cxxopts.hpp"
-//#include <iostream.h>
-
+#include <initguid.h>
+#include <usbiodef.h>
 
 static GUID	GUID_DFU = { 0x3fe809ab, 0xfb91, 0x4cb5, { 0xa6, 0x43, 0x69, 0x67, 0x0d, 0x52,0x36,0x6e } };
 static GUID GUID_APP = { 0xcb979912, 0x5029, 0x420a, { 0xae, 0xb1, 0x34, 0xfc, 0x0a, 0x7d,0x57,0x26 } };
@@ -744,7 +744,8 @@ void Refresh()
 
 	// Continue with DFU devices. DFU devices will be listed after HID ones
 
-	GUID Guid=GUID_DFU;
+	//GUID Guid=GUID_DFU;
+	GUID Guid = GUID_DEVINTERFACE_USB_DEVICE;
 	devIndex=0;
 
 
@@ -755,7 +756,7 @@ void Refresh()
 		SP_INTERFACE_DEVICE_DATA ifData;
 		ifData.cbSize=sizeof(ifData);
 
-		for (devIndex=0;SetupDiEnumDeviceInterfaces(info, NULL, &Guid, devIndex, &ifData);++devIndex)
+		for (int i=0;SetupDiEnumDeviceInterfaces(info, NULL, &Guid, i, &ifData);++i)
 		{
 			DWORD needed;
 
@@ -765,29 +766,38 @@ void Refresh()
 			detail->cbSize=sizeof(SP_INTERFACE_DEVICE_DETAIL_DATA);
 			SP_DEVINFO_DATA did={sizeof(SP_DEVINFO_DATA)};
 		
+			DeviceInfo& devInfo = m_DeviceInfos[devIndex];
 			if (SetupDiGetDeviceInterfaceDetail(info, &ifData, detail, needed, NULL, &did))
 			{
-				// Add the link to the list of all DFU devices
-				m_DeviceInfos[devIndex].m_DevPath=detail->DevicePath;
+				CString path = detail->DevicePath;
+				if (path.MakeLower().Find("vid_0483&pid_df11") >=0)
+				{
+					// Add the link to the list of all DFU devices
+					devInfo.m_DevPath=detail->DevicePath;
+					devIndex++;
+				}
+				else
+				{
+					continue;
+				}
 			}
 			else
 			{
-				m_DeviceInfos[devIndex].m_DevPath = "";   //m_CtrlDFUDevices.AddString("");
+				continue;
 			}
 
 			if (SetupDiGetDeviceRegistryProperty(info, &did, SPDRP_DEVICEDESC, NULL, (PBYTE)Product, 253, NULL))
 			{ 
-				m_DeviceInfos[devIndex].m_Prod = Product;
+				devInfo.m_Prod = Product;
 			}
 			else
 			{
-				m_DeviceInfos[devIndex].m_Prod = "(Unnamed DFU device)";
+				devInfo.m_Prod = "(Unnamed DFU device)";
 			}
 			// Add the name of the device
 			//m_CtrlDevices.AddString(Prod);
 			delete[] (PBYTE)detail;
 
-			DeviceInfo& devInfo = m_DeviceInfos[devIndex];
 
 
 			if (STDFU_Open((LPSTR)(LPCSTR)devInfo.m_DevPath, &hDle) == STDFU_NOERROR)   //  !!!! To be changed
@@ -803,7 +813,7 @@ void Refresh()
 						{
 							if (devInfo.m_CurrDevDFUDesc.bcdDFUVersion != 0)
 							{
-								m_DeviceInfos[devIndex].m_Error = "Bad DFU protocol version. Should be 1.1A";
+								devInfo.m_Error = "Bad DFU protocol version. Should be 1.1A";
 							}
 						}
 						else
@@ -817,21 +827,25 @@ void Refresh()
 							}
 							else
 							{
-								m_DeviceInfos[devIndex].m_Error = "Unable to find or decode device mapping... Bad Firmware";
+								devInfo.m_Error = "Unable to find or decode device mapping... Bad Firmware";
 							}
 						}
 					}
 					else
 					{
-						m_DeviceInfos[devIndex].m_Error = "Unable to get DFU descriptor... Bad Firmware";
+						devInfo.m_Error = "Unable to get DFU descriptor... Bad Firmware";
 					}
 				}
 				else
 				{
-					m_DeviceInfos[devIndex].m_Error = "Unable to get descriptors... Bad Firmware";
+					devInfo.m_Error = "Unable to get descriptors... Bad Firmware";
 				}
+				STDFU_Close(&hDle);
 			}
-			STDFU_Close(&hDle);
+			else
+			{
+				devInfo.m_Error = "Unable to open device...";
+			}
 		}
 		SetupDiDestroyDeviceInfoList(info);
 	}
@@ -1405,6 +1419,12 @@ int main(int argc, const char* argv[])
 		{
 			std::cout << "Error: More than one device found. Please, disconnect the rest" << std::endl;
 			std::cout << "       or specify the device path!" << std::endl;
+			return 1;
+		}
+
+		if (m_DeviceInfos[m_CurrentDevice].m_Error != "")
+		{
+			std::cout << "Error: No usable devices found" << std::endl;
 			return 1;
 		}
 
