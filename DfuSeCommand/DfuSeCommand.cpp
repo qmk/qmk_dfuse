@@ -844,7 +844,8 @@ void Refresh()
 			}
 			else
 			{
-				devInfo.m_Error = "Unable to open device...";
+				devInfo.m_Error = "It looks like the wrong driver is installed.\n"
+					"            Please install the STM32 DfuSe drivers or use dfu-util";
 			}
 		}
 		SetupDiDestroyDeviceInfoList(info);
