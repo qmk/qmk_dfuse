@@ -169,6 +169,9 @@
       <Project>{1976cd02-0152-4cce-806c-38362e057481}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Driver\install.bat" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -30,4 +30,9 @@
   <ItemGroup>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Driver\install.bat">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>
