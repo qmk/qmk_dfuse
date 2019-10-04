@@ -2,7 +2,7 @@
 
 A small command-line tool for flashing STM32 based devices for **Windows**. It's based on 
 [this](https://www.st.com/en/development-tools/stsw-stm32080.html) demo project created by STM.
-The latest binary version can be downloaded from the GitHub releases tab
+The latest binary version can be downloaded from the [GitHub releases tab](https://github.com/qmk/qmk_dfuse/releases).
 
 ```
 Usage:
@@ -16,7 +16,7 @@ Usage:
   -v, --verify            Verify after download
   ```
   
-  If you need to compile or modify the sources, then a Visual Studio 2017 solution is provided and contain several different projecs.
+  If you need to compile or modify the sources, then a Visual Studio 2017 solution is provided and contains several different projecs.
   The interesting one is the modified command-line project QMKDfuSe.
   
-  Check SLA0044.txt for license information
+  Check [SLA0044.txt](./SLA0044.txt) for license information
